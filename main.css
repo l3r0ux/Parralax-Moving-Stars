@@ -1,0 +1,45 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: black;
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    z-index: 100;
+}
+
+#container {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background-color: #13151f;
+    background-image: radial-gradient(circle at right, #99f8ff, #007ea5, #004a61, transparent, transparent, transparent)
+}
+
+.star {
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+    mix-blend-mode: screen;
+    transform: translateX(0);
+    animation-name: animate-star;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+@keyframes animate-star {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-101vw);
+    }
+}
