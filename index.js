@@ -1,24 +1,21 @@
 
 const container = document.getElementById('container');
+const starCountInput = document.getElementById('star-count-input')
+const applyStarCount = document.getElementById('submit')
 const colors = ['#97e1ff', '#ffae80', '#6171ff'];
 const shadows = ['#c0edff', '#ffd4bb', '#c0c1ff'];
-// Array for collecting stars so that we can check and remove them
-// Since we dont have access to them becuase of the setInterval
+// Array containing all the stars and its related animation object so that we can check when a star is off screen and restart their animation
 const stars = [];
 
-const makeStars = (isInitial = false, i = 0) => {
-    // Generate random top position, select correct colors and randomize size
+const makeAndMoveStars = (i) => {
+    // Generate random top position, select correct colors and randomize size for star
     const randSelectedColor = Math.floor(Math.random() * colors.length);
     const randVerticalPos = Math.random() * container.offsetHeight + container.offsetTop;
     const randSize = Math.floor(Math.random() * (7 - 1) + 1)
 
-    let horizontalPos;
-    if (isInitial === true) {
-        horizontalPos = Math.random() * container.offsetWidth + container.offsetLeft;
-    } else {
-        horizontalPos = container.offsetLeft + container.offsetWidth;
-    }
+    let horizontalPos = Math.random() * container.offsetWidth + container.offsetLeft;
 
+    // Make star
     const star = document.createElement('span');
     star.style.width = `${randSize}px`;
     star.style.height = `${randSize}px`;
@@ -26,60 +23,86 @@ const makeStars = (isInitial = false, i = 0) => {
     star.style.boxShadow = `0 0 10px ${shadows[randSelectedColor]}`;
     star.style.top = `${randVerticalPos}px`;
     star.style.left = `${horizontalPos}px`;
-    star.classList.add('star')
-    // Give initial stars different ID so that they dont clash with generated stars when removing
-    star.id = isInitial ? `${i}` : `${i / 100}`
-    document.querySelector('#container').append(star)
-
-    const specificStar = document.getElementById(isInitial ? `${i}` : `${i / 100}`);
-    stars.push(specificStar);
+    star.classList.add('star');
+    star.id = `${i}`
+    container.append(star)
 
     // Put corresponding animation duration/speed depending on size
+    let duration = 0;
     switch (randSize) {
         case 1:
-            specificStar.style.animationDuration = '90s';
+            duration = 90000;
             break;
         case 2:
-            specificStar.style.animationDuration = '70s';
+            duration = 80000;
             break;
         case 3:
-            specificStar.style.animationDuration = '50s';
+            duration = 70000;
             break;
         case 4:
-            specificStar.style.animationDuration = '40s';
+            duration = 60000;
             break;
         case 5:
-            specificStar.style.animationDuration = '30s';
+            duration = 50000;
             break;
         case 6:
-            specificStar.style.animationDuration = '20s';
+            duration = 40000;
             break;
     }
+
+    // Move star
+    const moveStarKeyframes = {
+        transform: 'translateX(0)',
+        transform: 'translateX(-105vw)'
+    }
+    const options = {
+        duration: duration,
+        fill: 'forwards',
+    }
+
+    // Push star to array to check on each one later
+    const specificStar = document.getElementById(`${i}`);
+
+    // Stars is an array of objects, each object containing the star, and its related animation object
+    stars.push({ specificStar, animationObj: specificStar.animate(moveStarKeyframes, options) });
 }
 
 // Making 180 initial stars
-for (let i = 0; i < 180; i++) {
-    makeStars(true, i);
+function makeStars(starCount) {
+    for (i = 0; i < starCount; i++) {
+        // Make stars
+        makeAndMoveStars(i);
+    }
+
+    // Prefill starcount with amount currently on screen
+    starCountInput.value = starCount;
 }
 
-// Making one star every 250ms
-// Averages out to around 180 stars on screen at one time
-// The purpose of variable "i" is just to give stars id's
-let i = 0;
-setInterval(function () {
-    i++;
-    makeStars(false, i);
-}, 250);
-
-// Periodically check when star is out of bounds of container, then remove from DOM and array
-setInterval((function () {
-    for (let specificStar of stars) {
-        if (specificStar.getBoundingClientRect().left <= container.offsetLeft - 6) {
-            specificStar.remove();
-            const starIndex = stars.indexOf(specificStar);
-            stars.splice(starIndex, 1);
+// Periodically check when star is out of bounds of container -
+// - then cancel animation, restart it, and move it back to start
+let id = setInterval((function () {
+    for (let star of stars) {
+        if (star.specificStar.getBoundingClientRect().left <= container.offsetLeft - 6) {
+            star.animationObj.cancel();
+            star.specificStar.style.left = `${container.offsetLeft + container.offsetWidth}px`;
+            star.specificStar.style.top = `${Math.random() * container.offsetHeight + container.offsetTop}px`
+            star.animationObj.play();
         }
     }
-    console.log(`STARS ARRAY: ${stars.length}`);
-    console.log(`STARS BROWSER: ${document.querySelectorAll('.star').length}`);
-}), 50)
+}), 1)
+
+makeStars(100);
+
+applyStarCount.addEventListener('click', () => {
+    // reset stars array
+    stars.length = 0;
+
+    // delete all stars on page
+    let starsInDOM = document.querySelectorAll('span');
+    for (let star of starsInDOM) {
+        star.remove()
+    }
+
+    // Make new amount of stars
+    makeStars(starCountInput.value);
+})
